@@ -261,7 +261,6 @@ public class DibsClient
    * @param transactionId the transaction to determine the card type for
    */
   public String getCardType(Long transactionId)
-    throws DibsException
   {
     // First fill out the message to dibs
     Map msg = new HashMap();
