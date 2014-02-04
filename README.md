@@ -1,2 +1,3 @@
-dbis-client
+DIBS Client
 ===========
+
