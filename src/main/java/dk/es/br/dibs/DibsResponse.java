@@ -13,7 +13,7 @@ public interface DibsResponse {
     /**
      * @return {@link String} representation of the error code (if any)
      */
-    public String getErrorKey();
+    public String getReason();
     /**
      * @return {@link String} representation of the error action code (if any)
      */
