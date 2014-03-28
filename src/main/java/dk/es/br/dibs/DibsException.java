@@ -7,7 +7,6 @@ package dk.es.br.dibs;
  *
  * @author     Bruun Rasmussen Kunstauktioner
  * @since      22. maj 2007
- * @version    $Id: DibsException.java 11156 2008-08-22 10:07:17Z peder $
  */
 public class DibsException
      extends Exception
@@ -82,13 +81,9 @@ public class DibsException
     m_actionCode = actionCode;
   }
 
-  /**
-   * Returns a string representation of the error
-   *
-   * @return    a string representation of the error
-   */
-  public String toString()
+  @Override
+  public String getMessage()
   {
-    return super.toString() + ", errorKey=" + m_key + ", actionCode=" + m_actionCode;
+    return super.getMessage() + ", errorKey=" + m_key + ", actionCode=" + m_actionCode;
   }
 }

@@ -86,17 +86,10 @@ public class DibsClient
     msg.put("ticket", accountId);
 
     // Query the DIBS server
-    try
-    {
-      Map result = post("/cgi-adm/delticket.cgi", msg, true);
-      String status = (String) result.get("status");
-      if (status == null || !status.equalsIgnoreCase("ACCEPTED"))
-        throw new DibsException("'" + accountId + "': failed to delete account: " + result.get("message") + " (" + result.get("reason") + ")");
-    }
-    catch (DibsException ex)
-    {
-      LOG.error("Failed to delete account: " + ex.getMessage());
-    }
+    Map result = post("/cgi-adm/delticket.cgi", msg, true);
+    String status = (String) result.get("status");
+    if (status == null || !status.equalsIgnoreCase("ACCEPTED"))
+      throw new DibsException("'" + accountId + "': failed to delete account: " + result.get("message") + " (" + result.get("reason") + ")");
   }
 
   /**
@@ -107,6 +100,7 @@ public class DibsClient
    * @return "ok" if there are no problems. Or the response
    */
   public DibsResponse validateCardSubscription(String accountId)
+    throws DibsException
   {
     // First fill out the message to dibs - authorize a 1kr transfer
     Map params = new HashMap();
@@ -150,7 +144,7 @@ public class DibsClient
     String message = (String)result.get("message");
 
     // Presume auth failed. Need to see if the cardholder is to blame
-    switch (new Integer(reason).intValue())
+    switch (new Integer(reason))
     {
       case 1: // Communication problems
       case 2: // Error in the parameters sent to the DIBS server
@@ -163,6 +157,7 @@ public class DibsClient
   }
 
   private Map post(String path, Map params, boolean auth)
+          throws DibsException
   {
     long t1 = System.currentTimeMillis();
 
@@ -176,7 +171,7 @@ public class DibsClient
     }
     catch (IOException ex) {
       LOG.error(url + "["+params+"] failed", ex);
-      throw new RuntimeException(url + ": DIBS communication failure", ex);
+      throw new DibsException(url + ": DIBS communication failure", ex);
     }
     finally {
       long t2 = System.currentTimeMillis();
@@ -261,6 +256,7 @@ public class DibsClient
    * @param transactionId the transaction to determine the card type for
    */
   public String getCardType(Long transactionId)
+          throws DibsException
   {
     // First fill out the message to dibs
     Map msg = new HashMap();
