@@ -171,7 +171,7 @@ public class DibsClient
     }
     catch (IOException ex) {
       LOG.error(url + "["+params+"] failed", ex);
-      throw new DibsException(url + ": DIBS communication failure", ex);
+      throw new DibsException(ex);
     }
     finally {
       long t2 = System.currentTimeMillis();
@@ -271,7 +271,7 @@ public class DibsClient
     String arg1 = (String)res.get("1");
 
     if ("0".equals(arg1)) {
-      LOG.info(transactionId + ": card type \"" + arg1 + "\"");
+      LOG.info(transactionId + ": card type not recognized");
       return null;
     }
 
