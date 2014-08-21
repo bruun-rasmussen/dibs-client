@@ -94,12 +94,13 @@ public class DibsClient
 
   /**
    * Checks the validity of the specified account in the DIBS system. This is
-   * done by attempting to authorize a 1kr transaction.
+   * done by attempting to authorize a small transaction, and then immediately cancel
+   * the authorization.
    *
    * @param account the account to check
    * @return "ok" if there are no problems. Or the response
    */
-  public DibsResponse validateCardSubscription(String accountId)
+  public DibsResponse validateCardSubscription(String accountId, int cents)
     throws DibsException
   {
     // First fill out the message to dibs - authorize a 1kr transfer
@@ -108,7 +109,7 @@ public class DibsClient
     params.put("merchant", getMerchantId());
     params.put("ticket", accountId);
     params.put("orderid", "checking-account");
-    params.put("amount", "100");
+    params.put("amount", String.valueOf(cents));
     params.put("currency", CURRENCY_DKK);
 
     // Query the DIBS server
@@ -132,7 +133,7 @@ public class DibsClient
       }
       catch (Exception ex)
       {
-        LOG.error("Validate Account: Exception trying to cancel payment " + transact, ex);
+        LOG.error("Validate Account: Exception trying to cancel authorization " + transact, ex);
       }
 
       LOG.info(accountId + " checked positive");
