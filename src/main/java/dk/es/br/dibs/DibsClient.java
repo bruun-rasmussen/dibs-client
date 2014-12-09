@@ -7,6 +7,7 @@ import java.security.Security;
 
 import com.sun.net.ssl.internal.ssl.Provider;
 import java.math.BigDecimal;
+import java.util.Currency;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -31,23 +32,6 @@ import org.slf4j.LoggerFactory;
 public class DibsClient
 {
   private final static Logger LOG = LoggerFactory.getLogger(DibsClient.class);
-
-  // Most common currency Codes, supported by dibs.
-  // We are only using DDK - otherwise consider using LAND db table
-
-  private final static String CURRENCY_DKK = "208";
-//public final static String CURRENCY_EUR = "978";
-//public final static String CURRENCY_USD = "840";
-//public final static String CURRENCY_GBP = "826";
-//public final static String CURRENCY_SEK = "752";
-//public final static String CURRENCY_AUD = "036";
-//public final static String CURRENCY_CAD = "124";
-//public final static String CURRENCY_ISK = "352";
-//public final static String CURRENCY_JPY = "392";
-//public final static String CURRENCY_NZD = "554";
-//public final static String CURRENCY_NOK = "578";
-//public final static String CURRENCY_CHF = "756";
-//public final static String CURRENCY_TRL = "792";  // Server names used to access DIBS/Architrade
 
   static
   {
@@ -92,6 +76,25 @@ public class DibsClient
       throw new DibsException("'" + accountId + "': failed to delete account: " + result.get("message") + " (" + result.get("reason") + ")");
   }
 
+  private static enum Iso4217 {
+    DKK("208"), EUR("978"), USD("840"), GBP("826"),
+    SEK("752"), AUD("036"), CAD("124"), ISK("352"),
+    JPY("392"), NZD("554"), NOK("578"), CHF("756"),
+    TRL("792");
+
+    private final String code;
+
+    private Iso4217(String code) {
+      this.code = code;
+    }
+  }
+  
+  public static String codeOf(Currency currency) {
+    /* replace with currency.getNumericCode() (as of java 1.7) sometime... */
+    Iso4217 dc = Iso4217.valueOf(currency.getCurrencyCode());
+    return dc.code;
+  }
+  
   /**
    * Checks the validity of the specified account in the DIBS system. This is
    * done by attempting to authorize a small transaction, and then immediately cancel
@@ -100,9 +103,9 @@ public class DibsClient
    * @param account the account to check
    * @return "ok" if there are no problems. Or the response
    */
-  public DibsResponse validateCardSubscription(String accountId, int cents)
+  public DibsResponse validateCardSubscription(String accountId, int cents, Currency currency)
     throws DibsException
-  {
+  {    
     // First fill out the message to dibs - authorize a 1kr transfer
     Map params = new HashMap();
 
@@ -110,7 +113,7 @@ public class DibsClient
     params.put("ticket", accountId);
     params.put("orderid", "checking-account");
     params.put("amount", String.valueOf(cents));
-    params.put("currency", CURRENCY_DKK);
+    params.put("currency", codeOf(currency));
 
     // Query the DIBS server
     Map result = post("/cgi-ssl/ticket_auth.cgi", params, false);
@@ -197,7 +200,7 @@ public class DibsClient
    * @param amount the amount of money to deduct
    * @return the transaction id
    */
-  public Long withdraw(String accountId, String orderId, BigDecimal amount)
+  public Long withdraw(String accountId, String orderId, BigDecimal amount, Currency currency)
     throws DibsException
   {
     long cents = Math.round(amount.doubleValue() * 100.0);
@@ -212,14 +215,14 @@ public class DibsClient
 
     long t1 = System.currentTimeMillis();
     LOG.info("Withdraw " + amount + " from card account " + accountId + ", orderId " + orderId);
-    Long transactionId = withdrawCents(accountId, orderId, cents);
+    Long transactionId = withdrawCents(accountId, orderId, cents, currency);
     long t2 = System.currentTimeMillis();
     LOG.info("Withdrew " + amount + " from card account " + accountId + ", orderId " + orderId + ": transaction " + transactionId + " (" + (t2-t1) + "ms)");
 
     return transactionId;
   }
 
-  private Long withdrawCents(String accountId, String orderId, long cents)
+  private Long withdrawCents(String accountId, String orderId, long cents, Currency currency)
     throws DibsException
   {
     // First fill out the message to dibs
@@ -228,7 +231,7 @@ public class DibsClient
     msg.put("ticket", accountId);
     msg.put("orderid", orderId);
     msg.put("amount", cents);
-    msg.put("currency", CURRENCY_DKK);
+    msg.put("currency", codeOf(currency));
     msg.put("capturenow", "yes");
     msg.put("uniqueoid", "yes");
 
