@@ -6,7 +6,7 @@
 
   <groupId>dk.es.br.dibs</groupId>
   <artifactId>dibs-client</artifactId>
-  <version>0.6-SNAPSHOT</version>
+  <version>0.5.1</version>
 
   <name>DIBS service client</name>
   <url>http://www.dibs.dk/</url>
@@ -15,7 +15,7 @@
     <connection>scm:git:git://github.com/bruun-rasmussen/dibs-client.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/bruun-rasmussen/dibs-client.git</developerConnection>
     <url>https://github.com/bruun-rasmussen/dibs-client/</url>
-    <tag>HEAD</tag>
+    <tag>dibs-client-0.5.1</tag>
   </scm>
 
   <properties>
