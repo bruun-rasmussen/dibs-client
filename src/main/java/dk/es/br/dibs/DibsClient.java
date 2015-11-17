@@ -7,6 +7,9 @@ import java.security.Security;
 
 import com.sun.net.ssl.internal.ssl.Provider;
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Currency;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -235,6 +238,10 @@ public class DibsClient
     msg.put("capturenow", "yes");
     msg.put("uniqueoid", "yes");
 
+    // cf. http://tech.dibspayment.com/D2/FlexWin/API/MD5
+    String md5key = md5of("merchant=" + getMerchantId() + "&orderid=" + orderId + "&ticket=" + accountId + "&currency=" + codeOf(currency) + "&amount=" + cents);
+    msg.put("md5key", md5key);
+
     if (isTesting())
       msg.put("test", "yes");
 
@@ -453,5 +460,27 @@ public class DibsClient
 
   private boolean isTesting() {
       return cfg.isTesting();
+  }
+  
+  public String md5of(String src) {
+    return MD5(cfg.getMd5K1(), cfg.getMd5K2(), src);
+  }
+  
+  public static String MD5(String src) {
+    MessageDigest md;
+    try {
+      md = MessageDigest.getInstance("MD5");
+    } catch (NoSuchAlgorithmException ex) {
+      throw new RuntimeException(ex);
+    }
+    md.update(src.getBytes());
+    BigInteger hash = new BigInteger(1, md.digest());
+    String res = "0000000000000000000000000000000" + hash.toString(16);
+    res = res.substring(res.length() - 32);
+    return res;
+  }
+  
+  public static String MD5(String k1, String k2, String src) {
+    return MD5(k2 + MD5(k1 + src));
   }
 }

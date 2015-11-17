@@ -6,12 +6,12 @@ package dk.es.br.dibs;
  */
 public interface DibsConfig {
 
-    public String getMerchantId();
+    String getMerchantId();
+    String getDibsUser();
+    String getDibsPassword();
+    String getMd5K1();
+    String getMd5K2();
 
-    public String getDibsUser();
-
-    public String getDibsPassword();
-
-    public boolean isTesting();
+    boolean isTesting();
     
 }
