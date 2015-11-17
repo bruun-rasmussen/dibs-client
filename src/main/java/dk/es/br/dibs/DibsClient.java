@@ -62,7 +62,8 @@ public class DibsClient
    * Deletes the specified account from the DIBS system. The account template
    * MUST define the merchant and the account id properties
    *
-   * @param account the account to delete
+   * @param accountId the account to delete
+   * @throws DibsException if the account does not exist or for some reason cannot be deleted
    */
   public void deleteAccount(String accountId)
     throws DibsException
@@ -103,7 +104,9 @@ public class DibsClient
    * done by attempting to authorize a small transaction, and then immediately cancel
    * the authorization.
    *
-   * @param account the account to check
+   * @param accountId the account to check
+   * @param cents the amount to test authorization against
+   * @param currency the currency to test authorization against
    * @return "ok" if there are no problems. Or the response
    */
   public DibsResponse validateCardSubscription(String accountId, int cents, Currency currency)
@@ -198,7 +201,7 @@ public class DibsClient
    * This method will authorize and deduct the specified amount of money from
    * the specified account
    *
-   * @param account the account to check
+   * @param accountId the account to check
    * @param orderId the unique order id
    * @param amount the amount of money to deduct
    * @return the transaction id

@@ -71,7 +71,7 @@ public class DibsException
   /**
    * Sets the Payment Service action code
    *
-   * @param  errorKey  the Payment Service action code
+   * @param  actionCode  the Payment Service action code
    */
   public void setActionCode(String actionCode)
   {
