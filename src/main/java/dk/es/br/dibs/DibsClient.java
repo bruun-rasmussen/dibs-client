@@ -179,10 +179,6 @@ public class DibsClient
       LOG.info(path + "["+params+"] : " + res);
       return res;
     }
-    catch (IOException ex) {
-      LOG.error(url + "["+params+"] failed", ex);
-      throw new DibsException(ex);
-    }
     finally {
       long t2 = System.currentTimeMillis();
       LOG.info("DIBS call:" + path + " " + query + ": " + (t2-t1) + "ms");
@@ -316,20 +312,31 @@ public class DibsClient
    * @return the result
    */
   private String _post(URL url, String message, boolean auth)
-    throws IOException
+    throws DibsException
   {
-    URLConnection conn = url.openConnection();
-    conn.setDoOutput(true);
-    conn.setUseCaches(false);
+    PrintWriter wrt;
+    URLConnection conn;
+    try {
+      conn = url.openConnection();
+      conn.setDoOutput(true);
+      conn.setUseCaches(false);
 
-    // DO:
-    // conn.setConnectTimeout(...);
-    // conn.setReadTimeout(....);
+      // DO:
+      // conn.setConnectTimeout(...);
+      // conn.setReadTimeout(....);
 
-    if (auth)
-      conn.setRequestProperty("Authorization", basicAuth());
+      if (auth)
+        conn.setRequestProperty("Authorization", basicAuth());
 
-    PrintWriter wrt = new PrintWriter(conn.getOutputStream());
+      OutputStream os = conn.getOutputStream();
+   
+      wrt = new PrintWriter(os);    
+    }
+    catch (IOException ex) {
+      LOG.error(url + ": failed to connect", ex);
+      throw new DibsException("failed to connect", ex);
+    }
+    
     try {
       wrt.println(message);
     }
@@ -338,18 +345,23 @@ public class DibsClient
     }
 
     StringBuilder res = new StringBuilder();
-    BufferedReader rdr = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-    try
-    {
-      String line;
-      while ((line = rdr.readLine()) != null)
-        res.append(line);
+    try {
+      BufferedReader rdr = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+      try
+      {
+        String line;
+        while ((line = rdr.readLine()) != null)
+          res.append(line);
+      }
+      finally
+      {
+        rdr.close();
+      }
     }
-    finally
-    {
-      rdr.close();
+    catch (IOException ex) {
+      LOG.error(url + "[" + message + "]: failed to get response", ex);      
+      throw new DibsException("failed to get response", ex);      
     }
-
     return res.toString();
   }
 

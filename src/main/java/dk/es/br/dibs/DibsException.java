@@ -1,7 +1,5 @@
 package dk.es.br.dibs;
 
-import java.io.IOException;
-
 /**
  * An exception class used for errors during payment transactions.
  * Contains extra information such as the "errorKey" property
@@ -21,9 +19,9 @@ public class DibsException
     super(message);
   }
 
-  DibsException(IOException cause)
+  DibsException(String message, Exception cause)
   {
-    super("Communication failure", cause);
+    super(message, cause);
     m_key = cause.getClass().getName();
   }
 
