@@ -202,7 +202,7 @@ public class DibsClient
    * @param amount the amount of money to deduct
    * @return the transaction id
    */
-  public Long withdraw(String accountId, String orderId, BigDecimal amount, Currency currency)
+  public TransactionInfo withdraw(String accountId, String orderId, BigDecimal amount, Currency currency)
     throws DibsException
   {
     long cents = Math.round(amount.doubleValue() * 100.0);
@@ -217,14 +217,15 @@ public class DibsClient
 
     long t1 = System.currentTimeMillis();
     LOG.info("Withdraw " + amount + " from card account " + accountId + ", orderId " + orderId);
-    Long transactionId = withdrawCents(accountId, orderId, cents, currency);
+    TransactionInfo transaction = withdrawCents(accountId, orderId, cents, currency);
+    Long transactionId = transaction.transactionId();
+    BigDecimal feeAmount = transaction.feeAmount();
     long t2 = System.currentTimeMillis();
-    LOG.info("Withdrew " + amount + " from card account " + accountId + ", orderId " + orderId + ": transaction " + transactionId + " (" + (t2-t1) + "ms)");
-
-    return transactionId;
+    LOG.info("Withdrew " + amount + " from card account " + accountId + ", orderId " + orderId + ": transaction " + transactionId + ", fee reported by Dibs: " + feeAmount + " (" + (t2-t1) + "ms)");
+    return transaction;
   }
 
-  private Long withdrawCents(String accountId, String orderId, long cents, Currency currency)
+  private TransactionInfo withdrawCents(String accountId, String orderId, long cents, Currency currency)
     throws DibsException
   {
     // First fill out the message to dibs
@@ -236,6 +237,7 @@ public class DibsClient
     msg.put("currency", codeOf(currency));
     msg.put("capturenow", "yes");
     msg.put("uniqueoid", "yes");
+    msg.put("calcfee", "yes");
 
     // cf. http://tech.dibspayment.com/D2/FlexWin/API/MD5
     String md5key = md5of("merchant=" + getMerchantId() + "&orderid=" + orderId + "&ticket=" + accountId + "&currency=" + codeOf(currency) + "&amount=" + cents);
@@ -256,7 +258,24 @@ public class DibsClient
     if (StringUtils.isEmpty(transact))
       throw new DibsException("Withdrawal " + status + " without transaction: " + message, (String)result.get("reason"), (String)result.get("actioncode"));
 
-    return Long.valueOf(transact);
+    Long feeCents = Long.valueOf((String)result.get("fee"));
+    final BigDecimal feeAmount = new BigDecimal(feeCents).scaleByPowerOfTen(-2);
+    final Long transactionId = Long.valueOf(transact);
+
+    return new TransactionInfo()
+    {
+      @Override
+      public Long transactionId()
+      {
+        return transactionId;
+      }
+
+      @Override
+      public BigDecimal feeAmount()
+      {
+        return feeAmount;
+      }
+    };
   }
 
   /**
@@ -306,7 +325,7 @@ public class DibsClient
    * Posts a request to the DIBS server. Solemnly stolen from DIBS' sample
    * DeltapayHTTP class. Small changes implemented.
    *
-   * @param urlSpec the server
+   * @param url the server
    * @param message the parameters
    * @param auth should we use basic authentication
    * @return the result
@@ -498,4 +517,11 @@ public class DibsClient
   public static String MD5(String k1, String k2, String src) {
     return MD5(k2 + MD5(k1 + src));
   }
+
+  public interface TransactionInfo
+  {
+    Long transactionId();
+    BigDecimal feeAmount();
+  }
+
 }
