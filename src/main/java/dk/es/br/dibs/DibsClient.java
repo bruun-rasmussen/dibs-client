@@ -237,7 +237,7 @@ public class DibsClient
     msg.put("currency", codeOf(currency));
     msg.put("capturenow", "yes");
     msg.put("uniqueoid", "yes");
-    msg.put("calcfee", "yes");
+//    msg.put("calcfee", "yes");
 
     // cf. http://tech.dibspayment.com/D2/FlexWin/API/MD5
     String md5key = md5of("merchant=" + getMerchantId() + "&orderid=" + orderId + "&ticket=" + accountId + "&currency=" + codeOf(currency) + "&amount=" + cents);
@@ -258,8 +258,9 @@ public class DibsClient
     if (StringUtils.isEmpty(transact))
       throw new DibsException("Withdrawal " + status + " without transaction: " + message, (String)result.get("reason"), (String)result.get("actioncode"));
 
-    Long feeCents = Long.valueOf((String)result.get("fee"));
-    final BigDecimal feeAmount = new BigDecimal(feeCents).scaleByPowerOfTen(-2);
+//    Long feeCents = Long.valueOf((String)result.get("fee"));
+//    final BigDecimal feeAmount = new BigDecimal(feeCents).scaleByPowerOfTen(-2);
+    final BigDecimal feeAmount = BigDecimal.ZERO;
     final Long transactionId = Long.valueOf(transact);
 
     return new TransactionInfo()
