@@ -26,7 +26,8 @@ import org.slf4j.LoggerFactory;
  *
  * TODO: * MD5 Checksums * Account names for Bredgade, Havnen,... ? * Passing
  * customer IP along - use "suspect" feature * Enforce currency. Account type
- * check * Use the "ordertext" parameter
+ * check * Use the "ordertext" parameter * Utilise refund endpoint, documented at
+ * http://tech.dibspayment.com/D2/API/Payment_functions/refundcgi
  *
  * @author Bruun Rasmussen Kunstauktioner
  * @since 9. september 2004
