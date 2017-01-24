@@ -201,9 +201,14 @@ public class DibsClient
    * @param accountId the account to check
    * @param orderId the unique order id
    * @param amount the amount of money to deduct
+   * @param chargeCardFee whether to charge card fee to the given card account
    * @return the transaction id
    */
-  public TransactionInfo withdraw(String accountId, String orderId, BigDecimal amount, Currency currency)
+  public TransactionInfo withdraw(String accountId,
+                                  String orderId,
+                                  BigDecimal amount,
+                                  Currency currency,
+                                  boolean chargeCardFee)
     throws DibsException
   {
     long cents = Math.round(amount.doubleValue() * 100.0);
@@ -218,7 +223,7 @@ public class DibsClient
 
     long t1 = System.currentTimeMillis();
     LOG.info("Withdraw " + amount + " from card account " + accountId + ", orderId " + orderId);
-    TransactionInfo transaction = withdrawCents(accountId, orderId, cents, currency);
+    TransactionInfo transaction = withdrawCents(accountId, orderId, cents, currency, chargeCardFee);
     Long transactionId = transaction.transactionId();
     BigDecimal feeAmount = transaction.feeAmount();
     long t2 = System.currentTimeMillis();
@@ -226,7 +231,11 @@ public class DibsClient
     return transaction;
   }
 
-  private TransactionInfo withdrawCents(String accountId, String orderId, long cents, Currency currency)
+  private TransactionInfo withdrawCents(String accountId,
+                                        String orderId,
+                                        long cents,
+                                        Currency currency,
+                                        boolean chargeCardFee)
     throws DibsException
   {
     // First fill out the message to dibs
@@ -244,10 +253,10 @@ public class DibsClient
     msg.put("md5key", md5key);
 
     if (isTesting())
-    {
       msg.put("test", "yes");
+
+    if (chargeCardFee)
       msg.put("calcfee", "yes");
-    }
 
     // Query the DIBS server
     Map result = post("/cgi-ssl/ticket_auth.cgi", msg, false);
