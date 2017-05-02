@@ -129,7 +129,7 @@ public class DibsClient
 
     if ("ACCEPTED".equalsIgnoreCase(status))
     {
-      // Checked out find. Now cancel the authorization:
+      // Checked out fine. Now cancel the authorization:
       String transact = (String)result.get("transact");
 
       // Change the status to be canceled
