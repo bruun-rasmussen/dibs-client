@@ -278,6 +278,17 @@ public class DibsClient
     final BigDecimal feeAmount = new BigDecimal(feeCents).scaleByPowerOfTen(-2);
     final Long transactionId = Long.valueOf(transact);
 
+    // TODO: From DIBS, does severity != null => suspect is true ?
+    String suspect = (String)result.get("suspect");
+    final Boolean isSuspect = suspect != null
+                      ? Boolean.valueOf(suspect)
+                      : false;
+
+    String severity = (String)result.get("severity");
+    final Integer suspectSeverity = suspect != null
+                            ? Integer.valueOf(severity)
+                            : null;
+
     return new TransactionInfo()
     {
       @Override
@@ -290,6 +301,18 @@ public class DibsClient
       public BigDecimal feeAmount()
       {
         return feeAmount;
+      }
+
+      @Override
+      public Boolean suspect()
+      {
+        return isSuspect;
+      }
+
+      @Override
+      public Integer severity()
+      {
+        return suspectSeverity;
       }
     };
   }
@@ -538,6 +561,12 @@ public class DibsClient
   {
     Long transactionId();
     BigDecimal feeAmount();
+    // Return true exactly when the response from DIBS has suspect=true
+    // False if response does not contain suspect param or if suspect=false
+    Boolean suspect();
+    // Return the severity if severity=# is present in response from DIBS,
+    // otherwise return null
+    Integer severity();
   }
 
 }
