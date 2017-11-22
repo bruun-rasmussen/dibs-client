@@ -152,8 +152,6 @@ public class DibsClient
 
     String reason = (String)result.get("reason");
     String message = (String)result.get("message");
-    String suspect = (String)result.get("suspect");
-    String severity = (String)result.get("severity");
 
     // Presume auth failed. Need to see if the cardholder is to blame
     switch (new Integer(reason))
