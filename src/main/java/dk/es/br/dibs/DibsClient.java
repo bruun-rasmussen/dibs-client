@@ -80,7 +80,7 @@ public class DibsClient
       throw new DibsException("'" + accountId + "': failed to delete account: " + result.get("message") + " (" + result.get("reason") + ")");
   }
 
-  private static enum Iso4217 {
+  private enum Iso4217 {
     DKK("208"), EUR("978"), USD("840"), GBP("826"),
     SEK("752"), AUD("036"), CAD("124"), ISK("352"),
     JPY("392"), NZD("554"), NOK("578"), CHF("756"),
@@ -88,7 +88,7 @@ public class DibsClient
 
     private final String code;
 
-    private Iso4217(String code) {
+    Iso4217(String code) {
       this.code = code;
     }
   }
