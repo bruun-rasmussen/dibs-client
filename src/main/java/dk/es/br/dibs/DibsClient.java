@@ -152,6 +152,8 @@ public class DibsClient
 
     String reason = (String)result.get("reason");
     String message = (String)result.get("message");
+    String suspect = (String)result.get("suspect");
+    String severity = (String)result.get("severity");
 
     // Presume auth failed. Need to see if the cardholder is to blame
     switch (new Integer(reason))
@@ -473,34 +475,55 @@ public class DibsClient
     private final String m_reason;
     private final String m_actionCode;
     private final Long m_transactionId;
+    private final boolean m_suspect;
+    private final Long m_severity;
 
     private CheckAccountResponse(boolean success, Map resultMap)
     {
       m_valid = success;
-
       m_reason = (String)resultMap.get("reason");
       m_actionCode = (String)resultMap.get("actioncode");
       String transact = (String)resultMap.get("transact");
       m_transactionId = transact == null ? null : Long.valueOf(transact);
+      String suspect = (String)resultMap.get("suspect");
+      m_suspect = suspect == null ? false : Boolean.valueOf(suspect);
+      String severity = (String)resultMap.get("severity");
+      m_severity = severity == null ? null : Long.valueOf(severity);
     }
 
+    @Override
     public boolean isValid()
     {
       return m_valid;
     }
 
+    @Override
     public String getReason()
     {
       return m_reason;
     }
 
+    @Override
     public String getActionCode()
     {
         return m_actionCode;
     }
 
+    @Override
     public Long getTransactionId() {
       return m_transactionId;
+    }
+
+    @Override
+    public boolean isSuspect()
+    {
+      return m_suspect;
+    }
+
+    @Override
+    public Long getSeverity()
+    {
+      return m_severity;
     }
   }
 
