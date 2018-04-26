@@ -6,7 +6,7 @@
 
   <groupId>dk.es.br.dibs</groupId>
   <artifactId>dibs-client</artifactId>
-  <version>0.6.8-SNAPSHOT</version>
+  <version>0.6.8</version>
 
   <name>DIBS service client</name>
   <url>http://www.dibs.dk/</url>
