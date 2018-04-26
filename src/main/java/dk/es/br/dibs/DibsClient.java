@@ -41,6 +41,8 @@ public class DibsClient
 {
   private final static Logger LOG = LoggerFactory.getLogger(DibsClient.class);
 
+  private final static SSLContext sslContext = initSSL();
+
   static
   {
     try
@@ -379,8 +381,6 @@ public class DibsClient
     PrintWriter wrt;
     HttpsURLConnection conn;
     try {
-      SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
-      sslContext.init(null, null, new SecureRandom());
       conn = (HttpsURLConnection)url.openConnection();
       conn.setSSLSocketFactory(sslContext.getSocketFactory());
 
@@ -398,7 +398,7 @@ public class DibsClient
    
       wrt = new PrintWriter(os);    
     }
-    catch (IOException | NoSuchAlgorithmException | KeyManagementException ex) {
+    catch (IOException ex) {
       LOG.error(url + ": failed to connect", ex);
       throw new DibsException("failed to connect", ex);
     }
@@ -596,6 +596,21 @@ public class DibsClient
     // Return the severity if severity=# is present in response from DIBS,
     // otherwise return null
     Integer severity();
+  }
+
+  private static SSLContext initSSL()
+  {
+    SSLContext sslContext;
+    try
+    {
+      sslContext = SSLContext.getInstance("TLSv1.2");
+      sslContext.init(null, null, new SecureRandom());
+    }
+    catch (NoSuchAlgorithmException | KeyManagementException ex)
+    {
+      throw new RuntimeException("Could not setyp ssl context", ex);
+    }
+    return sslContext;
   }
 
 }
