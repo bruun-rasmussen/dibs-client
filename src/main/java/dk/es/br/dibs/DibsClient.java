@@ -192,7 +192,7 @@ public class DibsClient
 
   private static URL dibsUrl(String path) {
       try {
-          return new URL("https://payment.architrade.com" + path);
+          return new URL(null, "https://payment.architrade.com" + path, new sun.net.www.protocol.https.Handler());
       } catch (MalformedURLException ex) {
           throw new IllegalArgumentException(path, ex);
       }
