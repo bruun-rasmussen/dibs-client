@@ -608,7 +608,7 @@ public class DibsClient
     }
     catch (NoSuchAlgorithmException | KeyManagementException ex)
     {
-      throw new RuntimeException("Could not setyp ssl context", ex);
+      throw new RuntimeException("Could not setup ssl context", ex);
     }
     return sslContext;
   }
