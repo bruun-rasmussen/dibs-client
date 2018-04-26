@@ -2,6 +2,8 @@ package dk.es.br.dibs;
 
 import java.io.*;
 import java.net.*;
+import java.security.KeyManagementException;
+import java.security.SecureRandom;
 import java.security.Security;
 
 import com.sun.net.ssl.internal.ssl.Provider;
@@ -18,6 +20,9 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 
 /**
  * This class serves as a payment service interface to the DIBS server. It has
@@ -372,9 +377,13 @@ public class DibsClient
     throws DibsException
   {
     PrintWriter wrt;
-    URLConnection conn;
+    HttpsURLConnection conn;
     try {
-      conn = url.openConnection();
+      SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+      sslContext.init(null, null, new SecureRandom());
+      conn = (HttpsURLConnection)url.openConnection();
+      conn.setSSLSocketFactory(sslContext.getSocketFactory());
+
       conn.setDoOutput(true);
       conn.setUseCaches(false);
 
@@ -389,7 +398,7 @@ public class DibsClient
    
       wrt = new PrintWriter(os);    
     }
-    catch (IOException ex) {
+    catch (IOException | NoSuchAlgorithmException | KeyManagementException ex) {
       LOG.error(url + ": failed to connect", ex);
       throw new DibsException("failed to connect", ex);
     }
