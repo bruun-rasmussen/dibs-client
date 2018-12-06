@@ -266,6 +266,7 @@ public class DibsClient
 
     // Query the DIBS server
     Map result = post("/cgi-ssl/ticket_auth.cgi", msg, false);
+    LOG.info("DIBS response: " + (result != null ? result.toString() : "null"));
 
     String status = (String)result.get("status");
     String message = (String)result.get("message");
