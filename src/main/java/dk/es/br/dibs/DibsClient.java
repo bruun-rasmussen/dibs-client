@@ -253,6 +253,7 @@ public class DibsClient
     msg.put("currency", codeOf(currency));
     msg.put("capturenow", "yes");
     msg.put("uniqueoid", "yes");
+    msg.put("fullreply", "yes");
 
     // cf. http://tech.dibspayment.com/D2/FlexWin/API/MD5
     String md5key = md5of("merchant=" + getMerchantId() + "&orderid=" + orderId + "&ticket=" + accountId + "&currency=" + codeOf(currency) + "&amount=" + cents);
