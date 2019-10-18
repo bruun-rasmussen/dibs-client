@@ -297,12 +297,20 @@ public class DibsClient
                             ? Integer.valueOf(severity)
                             : null;
 
+    final String orderNumber = (String)result.get("orderid");
+
     return new TransactionInfo()
     {
       @Override
       public Long transactionId()
       {
         return transactionId;
+      }
+
+      @Override
+      public String orderNumber()
+      {
+        return orderNumber;
       }
 
       @Override
@@ -591,6 +599,7 @@ public class DibsClient
   public interface TransactionInfo
   {
     Long transactionId();
+    String orderNumber();
     BigDecimal feeAmount();
     // Return true exactly when the response from DIBS has suspect=true
     // False if response does not contain suspect param or if suspect=false
