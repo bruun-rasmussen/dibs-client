@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import java.util.Currency;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -494,6 +495,7 @@ public class DibsClient
     private final Long m_transactionId;
     private final boolean m_suspect;
     private final Long m_severity;
+    private final Map m_response;
 
     private CheckAccountResponse(boolean success, Map resultMap)
     {
@@ -506,6 +508,7 @@ public class DibsClient
       m_suspect = suspect == null ? false : Boolean.valueOf(suspect);
       String severity = (String)resultMap.get("severity");
       m_severity = severity == null ? null : Long.valueOf(severity);
+      m_response = resultMap;
     }
 
     @Override
@@ -532,15 +535,9 @@ public class DibsClient
     }
 
     @Override
-    public boolean isSuspect()
+    public Map getResponse()
     {
-      return m_suspect;
-    }
-
-    @Override
-    public Long getSeverity()
-    {
-      return m_severity;
+      return Collections.unmodifiableMap(m_response);
     }
   }
 

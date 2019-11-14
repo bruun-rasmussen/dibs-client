@@ -1,6 +1,8 @@
 
 package dk.es.br.dibs;
 
+import java.util.Map;
+
 /**
  *
  * @author osa
@@ -23,14 +25,5 @@ public interface DibsResponse {
      */
     Long getTransactionId();
 
-  /**
-   * @return true exactly when response from DIBS includes suspect=true
-   */
-  boolean isSuspect();
-
-  /**
-   * @return suspect severity according to DIBS if present in response
-   * otherwise null
-   */
-  Long getSeverity();
+    Map getResponse();
 }
