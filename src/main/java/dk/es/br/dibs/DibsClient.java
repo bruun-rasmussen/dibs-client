@@ -11,7 +11,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
 import java.util.Currency;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -211,7 +210,7 @@ public class DibsClient
    * @param chargeCardFee whether to charge card fee to the given card account
    * @return the transaction id
    */
-  public TransactionInfo withdraw(String accountId,
+  public DibsResponse withdraw(String accountId,
                                   String orderId,
                                   BigDecimal amount,
                                   Currency currency,
@@ -230,15 +229,16 @@ public class DibsClient
 
     long t1 = System.currentTimeMillis();
     LOG.info("Withdraw " + amount + " from card account " + accountId + ", orderId " + orderId);
-    TransactionInfo transaction = withdrawCents(accountId, orderId, cents, currency, chargeCardFee);
-    Long transactionId = transaction.transactionId();
-    BigDecimal feeAmount = transaction.feeAmount();
+    DibsResponse response = withdrawCents(accountId, orderId, cents, currency, chargeCardFee);
+    DibsTransaction payment = (DibsTransaction) response.result();
+    Long transactionId = payment.transactionId();
+    BigDecimal feeAmount = payment.feeAmount();
     long t2 = System.currentTimeMillis();
     LOG.info("Withdrew " + amount + " from card account " + accountId + ", orderId " + orderId + ": transaction " + transactionId + ", fee reported by Dibs: " + feeAmount + " (" + (t2-t1) + "ms)");
-    return transaction;
+    return response;
   }
 
-  private TransactionInfo withdrawCents(String accountId,
+  private DibsResponse withdrawCents(String accountId,
                                         String orderId,
                                         long cents,
                                         Currency currency,
@@ -300,36 +300,35 @@ public class DibsClient
 
     final String orderNumber = (String)result.get("orderid");
 
-    return new TransactionInfo()
-    {
+    return new DibsResponse() {
       @Override
-      public Long transactionId()
-      {
+      public Long transactionId() {
         return transactionId;
       }
 
       @Override
-      public String orderNumber()
-      {
-        return orderNumber;
+      public boolean success() {
+        return true;
       }
 
       @Override
-      public BigDecimal feeAmount()
-      {
-        return feeAmount;
+      public String reason() {
+        return null;
       }
 
       @Override
-      public Boolean suspect()
-      {
-        return isSuspect;
+      public String actionCode() {
+        return null;
       }
 
       @Override
-      public Integer severity()
-      {
-        return suspectSeverity;
+      public Object result() {
+        return new Payment()
+            .transactionId(transactionId)
+            .feeAmount(feeAmount)
+            .suspect(isSuspect)
+            .suspectSeverity(suspectSeverity)
+            .orderId(orderNumber);
       }
     };
   }
@@ -487,57 +486,132 @@ public class DibsClient
     return msg.toString();
   }
 
-  private static class CheckAccountResponse implements DibsResponse
-  {
+  private static class CheckAccountResponse implements DibsResponse<Boolean> {
     private final boolean m_valid;
     private final String m_reason;
     private final String m_actionCode;
     private final Long m_transactionId;
-    private final boolean m_suspect;
-    private final Long m_severity;
-    private final Map m_response;
 
-    private CheckAccountResponse(boolean success, Map resultMap)
-    {
+    private CheckAccountResponse(boolean success, Map resultMap) {
       m_valid = success;
       m_reason = (String)resultMap.get("reason");
       m_actionCode = (String)resultMap.get("actioncode");
       String transact = (String)resultMap.get("transact");
       m_transactionId = transact == null ? null : Long.valueOf(transact);
-      String suspect = (String)resultMap.get("suspect");
-      m_suspect = suspect == null ? false : Boolean.valueOf(suspect);
-      String severity = (String)resultMap.get("severity");
-      m_severity = severity == null ? null : Long.valueOf(severity);
-      m_response = resultMap;
     }
 
     @Override
-    public boolean isValid()
+    public Long transactionId() {
+      return m_transactionId;
+    }
+
+    @Override
+    public boolean success() {
+      return m_valid;
+    }
+
+    @Override
+    public Boolean result()
     {
       return m_valid;
     }
 
     @Override
-    public String getReason()
+    public String reason()
     {
       return m_reason;
     }
 
     @Override
-    public String getActionCode()
+    public String actionCode()
     {
         return m_actionCode;
     }
+  }
 
-    @Override
-    public Long getTransactionId() {
-      return m_transactionId;
+  private static class Payment extends DibsTransaction
+  {
+    private Long transactionId;
+    private String orderId;
+
+    private BigDecimal amount;
+    private BigDecimal feeAmount;
+    private BigDecimal totalAmount;
+
+    private Boolean suspect;
+    private Integer suspectSeverity;
+
+    private String cardBrand;
+    private String cardType;
+    private String cardGroup;
+    private String cardRegion;
+
+    private Payment() {}
+
+    Payment transactionId(Long transactionId)
+    {
+      this.transactionId = transactionId;
+      return this;
     }
 
-    @Override
-    public Map getResponse()
+    Payment orderId(String orderId)
     {
-      return Collections.unmodifiableMap(m_response);
+      this.orderId = orderId;
+      return this;
+    }
+
+    Payment amount(BigDecimal amount)
+    {
+      this.amount = amount;
+      return this;
+    }
+
+    Payment feeAmount(BigDecimal feeAmount)
+    {
+      this.feeAmount = feeAmount;
+      return this;
+    }
+
+    Payment totalAmount(BigDecimal totalAmount)
+    {
+      this.totalAmount = amount;
+      return this;
+    }
+
+    Payment suspect(Boolean suspect)
+    {
+      this.suspect = suspect;
+      return this;
+    }
+
+    Payment suspectSeverity(Integer suspectSeverity)
+    {
+      this.suspectSeverity = suspectSeverity;
+      return this;
+    }
+
+    Payment cardBrand(String cardBrand)
+    {
+      this.cardBrand = cardBrand;
+      return this;
+    }
+
+    Payment cardType(String cardType)
+    {
+      this.cardType = cardType;
+      return this;
+    }
+
+    Payment cardGroup(String cardGroup)
+    {
+      this.cardGroup = cardGroup;
+      return this;
+    }
+
+    Payment cardRegion(String cardRegion)
+    {
+      this.cardRegion = cardRegion;
+      return this;
     }
   }
 
@@ -591,19 +665,6 @@ public class DibsClient
   
   public static String MD5(String k1, String k2, String src) {
     return MD5(k2 + MD5(k1 + src));
-  }
-
-  public interface TransactionInfo
-  {
-    Long transactionId();
-    String orderNumber();
-    BigDecimal feeAmount();
-    // Return true exactly when the response from DIBS has suspect=true
-    // False if response does not contain suspect param or if suspect=false
-    Boolean suspect();
-    // Return the severity if severity=# is present in response from DIBS,
-    // otherwise return null
-    Integer severity();
   }
 
   private static SSLContext initSSL()
