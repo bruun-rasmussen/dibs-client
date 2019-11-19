@@ -300,6 +300,10 @@ public class DibsClient
 
     final String orderNumber = (String)result.get("orderid");
 
+    final String cardType = (String)result.get("cardtypeCD");
+    final String cardGroup = (String)result.get("privatebusiness");
+    final String cardRegion = (String)result.get("surchargeregion");
+
     return new DibsResponse() {
       @Override
       public Long transactionId() {
@@ -328,8 +332,12 @@ public class DibsClient
             .feeAmount(feeAmount)
             .suspect(isSuspect)
             .suspectSeverity(suspectSeverity)
-            .orderId(orderNumber);
+            .orderId(orderNumber)
+            .cardType(cardType)
+            .cardGroup(cardGroup)
+            .cardRegion(cardRegion);
       }
+
     };
   }
 
