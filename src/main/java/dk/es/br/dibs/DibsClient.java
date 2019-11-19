@@ -304,7 +304,7 @@ public class DibsClient
     final String cardGroup = (String)result.get("privatebusiness");
     final String cardRegion = (String)result.get("surchargeregion");
 
-    return new DibsResponse() {
+    return new DibsResponse<Payment>() {
       @Override
       public Long transactionId() {
         return transactionId;
