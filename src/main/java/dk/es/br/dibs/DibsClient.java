@@ -621,6 +621,72 @@ public class DibsClient
       this.cardRegion = cardRegion;
       return this;
     }
+
+    @Override
+    public Long transactionId()
+    {
+      return transactionId;
+    }
+
+    @Override
+    public String orderId()
+    {
+      return orderId;
+    }
+
+    @Override
+    public BigDecimal amount()
+    {
+      return amount;
+    }
+
+    @Override
+    public BigDecimal feeAmount()
+    {
+      return feeAmount;
+    }
+
+    @Override
+    public BigDecimal totalAmount()
+    {
+      return totalAmount;
+    }
+
+    @Override
+    public Boolean suspect()
+    {
+      return suspect;
+    }
+
+    @Override
+    public Integer suspectSeverity()
+    {
+      return suspectSeverity;
+    }
+
+    @Override
+    public String cardBrand()
+    {
+      return cardBrand;
+    }
+
+    @Override
+    public String cardType()
+    {
+      return cardType;
+    }
+
+    @Override
+    public String cardGroup()
+    {
+      return cardGroup;
+    }
+
+    @Override
+    public String cardRegion()
+    {
+      return cardRegion;
+    }
   }
 
   private static String urlEncodeUTF8(String s)
