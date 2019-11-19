@@ -210,7 +210,7 @@ public class DibsClient
    * @param chargeCardFee whether to charge card fee to the given card account
    * @return the transaction id
    */
-  public DibsResponse withdraw(String accountId,
+  public DibsResponse<Payment> withdraw(String accountId,
                                   String orderId,
                                   BigDecimal amount,
                                   Currency currency,
@@ -229,8 +229,8 @@ public class DibsClient
 
     long t1 = System.currentTimeMillis();
     LOG.info("Withdraw " + amount + " from card account " + accountId + ", orderId " + orderId);
-    DibsResponse response = withdrawCents(accountId, orderId, cents, currency, chargeCardFee);
-    DibsTransaction payment = (DibsTransaction) response.result();
+    DibsResponse<Payment> response = withdrawCents(accountId, orderId, cents, currency, chargeCardFee);
+    Payment payment = response.result();
     Long transactionId = payment.transactionId();
     BigDecimal feeAmount = payment.feeAmount();
     long t2 = System.currentTimeMillis();
@@ -238,7 +238,7 @@ public class DibsClient
     return response;
   }
 
-  private DibsResponse withdrawCents(String accountId,
+  private DibsResponse<Payment> withdrawCents(String accountId,
                                         String orderId,
                                         long cents,
                                         Currency currency,
