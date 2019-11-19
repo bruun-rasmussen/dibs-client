@@ -537,7 +537,7 @@ public class DibsClient
     }
   }
 
-  private static class Payment extends DibsTransaction
+  public static class Payment extends DibsTransaction
   {
     private Long transactionId;
     private String orderId;
