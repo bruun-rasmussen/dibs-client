@@ -326,7 +326,7 @@ public class DibsClient
       }
 
       @Override
-      public Object result() {
+      public Payment result() {
         return new Payment()
             .transactionId(transactionId)
             .feeAmount(feeAmount)
