@@ -456,7 +456,7 @@ public class DibsClient
    * @param s the response received from the server
    * @return the result map
    */
-  private static Map parseResponse(String s)
+  public static Map parseResponse(String s)
   {
     LOG.info("To parse response {}", s);
 
