@@ -458,6 +458,8 @@ public class DibsClient
    */
   private static Map parseResponse(String s)
   {
+    LOG.info("To parse response {}", s);
+
     Map res = new HashMap();
     StringTokenizer st = new StringTokenizer(s, "&");
     while (st.hasMoreTokens())
