@@ -466,6 +466,8 @@ public class DibsClient
     {
       String s1 = st.nextToken();
       StringTokenizer st2 = new StringTokenizer(s1, "=");
+      if (st2.countTokens() == 0)
+        continue;
       String key = st2.countTokens() == 2 ? st2.nextToken().toLowerCase() : String.valueOf(res.size() + 1);
       String val = urlDecodeUTF8(st2.nextToken());
       res.put(key, val);

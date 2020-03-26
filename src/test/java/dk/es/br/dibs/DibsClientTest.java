@@ -39,9 +39,17 @@ public class DibsClientTest {
   }
 
   @Test
-  public void testParseResponseOnTestCardResponse()
+  public void testParseResponseWithEmptyKeyValuePair()
   {
-    String response = "status=ACCEPTED&transact=2718314359&authkey=a83ac622c10dc2a100eee91997a5a70b&cardtype=V-DK&approvalcode=123456&orderid=F8087028&paytype=V-DK&acquirer=TEST&merchantid=111111&=&capturenow=yes&currency=208&fullreply=yes&md5key=4e27b9c9eaafdc27669ebee92ea3f790&merchant=4259425&test=yes&textreply=yes&ticket=2718313871&uniqueoid=yes&amount=200000&totalamount=200000&cardcountry=DK&cardprefix=457110&cardnomask=XXXXXXXXXXXX0000&cardexpdate=2406&cardtypeCD=unknown&surchargeregion=unknown&privatebusiness=unknown";
+    String response = "status=ACCEPTED&transact=2718314359&cardtype=V-DK&acquirer=TEST&=&capturenow=yes&currency=208&fullreply=yes";
+    Map<String, String> parsed = DibsClient.parseResponse(response);
+    assertEquals(parsed.get("status"), "ACCEPTED");
+  }
+
+  @Test
+  public void testParseResponseWithNoEmptyKeyValuePair()
+  {
+    String response = "status=ACCEPTED&transact=2718314359&cardtype=V-DK&acquirer=TEST&capturenow=yes&currency=208&fullreply=yes";
     Map<String, String> parsed = DibsClient.parseResponse(response);
     assertEquals(parsed.get("status"), "ACCEPTED");
   }
