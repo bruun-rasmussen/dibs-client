@@ -53,4 +53,46 @@ public class DibsClientTest {
     Map<String, String> parsed = DibsClient.parseResponse(response);
     assertEquals(parsed.get("status"), "ACCEPTED");
   }
+
+  @Test
+  public void testParseFeeResponse()
+  {
+    String response = "{\"agreement\":123456,\"fee\":5250.0,\"amount\":250000.0}";
+    assertEquals(DibsClient.parseFeeResponse(response), 5250);
+  }
+
+  @Test
+  public void testParseFeeResponseWithVaryingWhitespace()
+  {
+    String response = "{\"agreement\":123456,\"fee\":5250.0,\"amount\" :  250000.0}";
+    assertEquals(DibsClient.parseFeeResponse(response), 5250);
+  }
+
+  @Test
+  public void testParseFeeResponseWithNoDecimalDigit()
+  {
+    String response = "{\"agreement\":123456,\"fee\":5250.0,\"amount\": 250000}";
+    assertEquals(DibsClient.parseFeeResponse(response), 5250);
+  }
+
+  @Test
+  public void testParseFeeResponseWithMultipleDecimalDigits()
+  {
+    String response = "{\"agreement\":123456,\"fee\":5250.0,\"amount\": 250000.0000}";
+    assertEquals(DibsClient.parseFeeResponse(response), 5250);
+  }
+
+  @Test
+  public void testParseSurchargeabilityReasonResponse()
+  {
+    String response = "{\"allowSurcharge\":true,\"reason\":\"BUSINESS_OR_NON_EU\"}";
+    assertEquals(DibsClient.parseSurchargeabilityResponse(response), "BUSINESS_OR_NON_EU");
+  }
+
+  @Test
+  public void testParseSurchargeabilityReasonResponseWithVaryingWhitespace()
+  {
+    String response = "{\"allowSurcharge\":true,\"reason\" :  \"BUSINESS_OR_NON_EU\"}";
+    assertEquals(DibsClient.parseSurchargeabilityResponse(response), "BUSINESS_OR_NON_EU");
+  }
 }

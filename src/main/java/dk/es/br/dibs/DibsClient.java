@@ -16,6 +16,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -40,8 +43,9 @@ import javax.net.ssl.SSLContext;
 public class DibsClient
 {
   private final static Logger LOG = LoggerFactory.getLogger(DibsClient.class);
-
   private final static SSLContext sslContext = initSSL();
+  private final static Pattern EXPECTED_FEE_PATTERN = Pattern.compile(".*\"fee\"\\s*:\\s*(\\d+)\\.?\\d*.*");
+  private final static Pattern SURCHARGEABILITY_REASON_PATTERN = Pattern.compile(".*\"reason\"\\s*:\\s*\"(\\w+)\".*");
 
   static
   {
@@ -178,7 +182,7 @@ public class DibsClient
   {
     long t1 = System.currentTimeMillis();
 
-    String query = formatQuery(params);
+    String query = prepareAndFormatQuery(params);
     URL url = dibsUrl(path);
     try {
       String response = _post(url, query, auth);
@@ -384,6 +388,59 @@ public class DibsClient
     return "Basic " + new String(Base64.encodeBase64(userpass.getBytes()));
   }
 
+  public String surchargeabilityReason(String ticket)
+      throws DibsException
+  {
+    String path = "/api/card/v1/tickets/" + ticket;
+    String response = _get(dibsUrl(path), false);
+
+    return parseSurchargeabilityResponse(response);
+  }
+
+  public static String parseSurchargeabilityResponse(String response)
+  {
+    Matcher matcher = SURCHARGEABILITY_REASON_PATTERN.matcher(response);
+    if (!matcher.matches())
+      throw new IllegalArgumentException("Unknown response format. Response was: " + response);
+
+    return matcher.group(1);
+  }
+
+  public int expectedFeeCents(String ticket, int amountCents, Currency currency)
+      throws DibsException
+  {
+    String path = "/api/fee/v1/subscribers/" + getMerchantId() + "/best";
+
+    Map<String, String> params =  new HashMap<>();
+    params.put("amount", Integer.toString(amountCents));
+    params.put("currency", codeOf(currency));
+    params.put("test", Boolean.toString(isTesting()));
+    params.put("ticket", ticket);
+
+    String response = _get(dibsUrl(path + "?" + formatQuery(params)), true);
+
+    return parseFeeResponse(response);
+  }
+
+  public static int parseFeeResponse(String response)
+  {
+    Matcher matcher = EXPECTED_FEE_PATTERN.matcher(response);
+    if (!matcher.matches())
+      throw new IllegalArgumentException("Unrecognised response format. Response was: " + response);
+    return Integer.parseInt(matcher.group(1));
+  }
+
+  private String _get(URL url, boolean auth)
+      throws DibsException
+  {
+    try {
+      return response(connect(url, auth));
+    } catch (IOException ioe)
+    {
+      throw new DibsException("failed", ioe);
+    }
+  }
+
   /**
    * Posts a request to the DIBS server. Solemnly stolen from DIBS' sample
    * DeltapayHTTP class. Small changes implemented.
@@ -396,56 +453,63 @@ public class DibsClient
   private String _post(URL url, String message, boolean auth)
     throws DibsException
   {
-    PrintWriter wrt;
     HttpsURLConnection conn;
+    OutputStream os;
     try {
-      conn = (HttpsURLConnection)url.openConnection();
-      conn.setSSLSocketFactory(sslContext.getSocketFactory());
-
-      conn.setDoOutput(true);
-      conn.setUseCaches(false);
-
-      // DO:
-      // conn.setConnectTimeout(...);
-      // conn.setReadTimeout(....);
-
-      if (auth)
-        conn.setRequestProperty("Authorization", basicAuth());
-
-      OutputStream os = conn.getOutputStream();
-   
-      wrt = new PrintWriter(os);    
+      conn = connect(url, auth);
+      os = conn.getOutputStream();
     }
     catch (IOException ex) {
       LOG.error(url + ": failed to connect", ex);
       throw new DibsException("failed to connect", ex);
     }
     
-    try {
+    try(PrintWriter wrt = new PrintWriter(os)) {
       wrt.println(message);
     }
-    finally {
-      wrt.close();
-    }
 
-    StringBuilder res = new StringBuilder();
     try {
-      BufferedReader rdr = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-      try
-      {
-        String line;
-        while ((line = rdr.readLine()) != null)
-          res.append(line);
-      }
-      finally
-      {
-        rdr.close();
-      }
+      return response(conn);
     }
     catch (IOException ex) {
       LOG.error(url + "[" + message + "]: failed to get response", ex);      
       throw new DibsException("failed to get response", ex);      
     }
+  }
+
+  private HttpsURLConnection connect(URL url, boolean auth)
+      throws DibsException {
+    HttpsURLConnection conn;
+    try {
+      conn = (HttpsURLConnection) url.openConnection();
+    } catch (IOException ioe)
+    {
+      throw new DibsException("failed to connect ", ioe);
+    }
+    conn.setSSLSocketFactory(sslContext.getSocketFactory());
+
+    conn.setDoOutput(true);
+    conn.setUseCaches(false);
+
+    // DO:
+    // conn.setConnectTimeout(...);
+    // conn.setReadTimeout(....);
+
+    if (auth)
+      conn.setRequestProperty("Authorization", basicAuth());
+
+    return conn;
+  }
+
+  private static String response(HttpsURLConnection conn)
+      throws IOException
+  {    StringBuilder res = new StringBuilder();
+      try (BufferedReader rdr = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+        String line;
+        while ((line = rdr.readLine()) != null)
+          res.append(line);
+      }
+
     return res.toString();
   }
 
@@ -475,11 +539,15 @@ public class DibsClient
     return res;
   }
 
+  private static String prepareAndFormatQuery(Map params)
+  {
+    params.put("textreply", "yes");
+    return formatQuery(params);
+  }
+
   private static String formatQuery(Map params)
   {
     StringBuilder msg = new StringBuilder();
-    // Always required
-    params.put("textreply", "yes");
     Iterator es = params.entrySet().iterator();
     while (es.hasNext())
     {
