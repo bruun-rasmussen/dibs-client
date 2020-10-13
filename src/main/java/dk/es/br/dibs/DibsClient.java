@@ -417,7 +417,7 @@ public class DibsClient
     params.put("test", Boolean.toString(isTesting()));
     params.put("ticket", ticket);
 
-    String response = _get(dibsUrl(path + "?" + formatQuery(params)), true);
+    String response = _get(dibsUrl(path + "?" + formatQuery(params)), false);
 
     return parseFeeResponse(response);
   }
