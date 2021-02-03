@@ -204,6 +204,13 @@ public class DibsClient
       }
   }
 
+  public DibsResponse<Payment> withdraw(String accountId, String orderId, BigDecimal amount, Currency currency, boolean chargeCardFee)
+    throws DibsException
+  {
+    return withdraw(accountId, orderId, amount, currency, chargeCardFee, "/cgi-ssl/ticket_auth.cgi");
+  }
+
+
   /**
    * This method will authorize and deduct the specified amount of money from
    * the specified account
@@ -212,13 +219,15 @@ public class DibsClient
    * @param orderId the unique order id
    * @param amount the amount of money to deduct
    * @param chargeCardFee whether to charge card fee to the given card account
+   * @param endpoint part of the url for Nets/Dibs service to use for payment
    * @return the transaction id
    */
   public DibsResponse<Payment> withdraw(String accountId,
                                   String orderId,
                                   BigDecimal amount,
                                   Currency currency,
-                                  boolean chargeCardFee)
+                                  boolean chargeCardFee,
+                                  String endpoint)
     throws DibsException
   {
     long cents = Math.round(amount.doubleValue() * 100.0);
@@ -232,8 +241,8 @@ public class DibsClient
       throw new DibsException("Cannot withdraw kr: " + amount);
 
     long t1 = System.currentTimeMillis();
-    LOG.info("Withdraw " + amount + " from card account " + accountId + ", orderId " + orderId);
-    DibsResponse<Payment> response = withdrawCents(accountId, orderId, cents, currency, chargeCardFee);
+    LOG.info("Withdraw " + amount + " from card account " + accountId + ", orderId " + orderId + ", using payment path " + endpoint);
+    DibsResponse<Payment> response = withdrawCents(accountId, orderId, cents, currency, chargeCardFee, endpoint);
     Payment payment = response.result();
     Long transactionId = payment.transactionId();
     BigDecimal feeAmount = payment.feeAmount();
@@ -243,10 +252,21 @@ public class DibsClient
   }
 
   private DibsResponse<Payment> withdrawCents(String accountId,
+                                              String orderId,
+                                              long cents,
+                                              Currency currency,
+                                              boolean chargeCardFee)
+        throws DibsException
+  {
+    return withdrawCents(accountId, orderId, cents, currency, chargeCardFee, "/cgi-ssl/ticket_auth.cgi");
+  }
+
+  private DibsResponse<Payment> withdrawCents(String accountId,
                                         String orderId,
                                         long cents,
                                         Currency currency,
-                                        boolean chargeCardFee)
+                                        boolean chargeCardFee,
+                                        String endpointPath /* "/cgi-ssl/ticket_auth.cgi" */)
     throws DibsException
   {
     // First fill out the message to dibs
@@ -271,7 +291,7 @@ public class DibsClient
       msg.put("calcfee", "yes");
 
     // Query the DIBS server
-    Map result = post("/cgi-ssl/ticket_auth.cgi", msg, false);
+    Map result = post(endpointPath, msg, false);
     LOG.info("DIBS response: " + (result != null ? result.toString() : "null"));
 
     String status = (String)result.get("status");
