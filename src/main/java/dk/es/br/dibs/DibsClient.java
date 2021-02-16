@@ -123,7 +123,7 @@ public class DibsClient
 
       String path = alternativePath == null ? "/cgi-ssl/ticket_auth.cgi" : alternativePath;
       Map response = post(path, params, false);
-      LOG.info("Response from card validation using zero_preauth against {} for ticket {}", path, ticket);
+      LOG.info("Response from card validation using zero_preauth against {} for ticket {}: {}", path, ticket, response);
 
       String status = (String)response.get("status");
       if("ACCEPTED".equalsIgnoreCase(status))
