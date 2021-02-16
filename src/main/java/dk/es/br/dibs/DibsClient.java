@@ -109,7 +109,41 @@ public class DibsClient
     Iso4217 dc = Iso4217.valueOf(currency.getCurrencyCode());
     return dc.code;
   }
-  
+
+  // Experimental. To work on solving card validation issues
+  public DibsResponse validateSubscription(String ticket, Map additionalParams, String alternativePath)
+        throws DibsException
+  {
+      Map params = new HashMap();
+      params.put("merchant", getMerchantId());
+      params.put("ticket", ticket);
+      params.put("zero_preauth", "1");
+
+      params.putAll(additionalParams);
+
+      String path = alternativePath == null ? "/cgi-ssl/ticket_auth.cgi" : alternativePath;
+      Map response = post(path, params, false);
+      LOG.info("Response from card validation using zero_preauth against {} for ticket {}", path, ticket);
+
+      String status = (String)response.get("status");
+      if("ACCEPTED".equalsIgnoreCase(status))
+        return new CheckAccountResponse(true, response);
+
+      String reason = (String)response.get("reason");
+      String message = (String)response.get("message");
+
+      switch (new Integer(reason))
+      {
+        case 1: // Communication problems
+        case 2: // Error in the parameters sent to the DIBS server
+        case 3: // Error at the acquirer
+          throw new RuntimeException("Account validation failed, " + response);
+      }
+
+      LOG.info(ticket + " checked negative (" + reason + ": " + message + ")");
+      return new CheckAccountResponse(false, response);
+  }
+
   /**
    * Checks the validity of the specified account in the DIBS system. This is
    * done by attempting to authorize a small transaction, and then immediately cancel
@@ -122,7 +156,7 @@ public class DibsClient
    */
   public DibsResponse validateCardSubscription(String accountId, int cents, Currency currency)
     throws DibsException
-  {    
+  {
     // First fill out the message to dibs - authorize a 1kr transfer
     Map params = new HashMap();
 
@@ -279,6 +313,7 @@ public class DibsClient
     msg.put("capturenow", "yes");
     msg.put("uniqueoid", "yes");
     msg.put("fullreply", "yes");
+    msg.put("mitType", "UCOF");
 
     // cf. http://tech.dibspayment.com/D2/FlexWin/API/MD5
     String md5key = md5of("merchant=" + getMerchantId() + "&orderid=" + orderId + "&ticket=" + accountId + "&currency=" + codeOf(currency) + "&amount=" + cents);
@@ -483,7 +518,7 @@ public class DibsClient
       LOG.error(url + ": failed to connect", ex);
       throw new DibsException("failed to connect", ex);
     }
-    
+
     try(PrintWriter wrt = new PrintWriter(os)) {
       wrt.println(message);
     }
@@ -492,8 +527,8 @@ public class DibsClient
       return response(conn);
     }
     catch (IOException ex) {
-      LOG.error(url + "[" + message + "]: failed to get response", ex);      
-      throw new DibsException("failed to get response", ex);      
+      LOG.error(url + "[" + message + "]: failed to get response", ex);
+      throw new DibsException("failed to get response", ex);
     }
   }
 
@@ -810,11 +845,11 @@ public class DibsClient
   private boolean isTesting() {
       return cfg.isTesting();
   }
-  
+
   public String md5of(String src) {
     return MD5(cfg.getMd5K1(), cfg.getMd5K2(), src);
   }
-  
+
   public static String MD5(String src) {
     MessageDigest md;
     try {
@@ -828,7 +863,7 @@ public class DibsClient
     res = res.substring(res.length() - 32);
     return res;
   }
-  
+
   public static String MD5(String k1, String k2, String src) {
     return MD5(k2 + MD5(k1 + src));
   }
