@@ -605,7 +605,7 @@ public class DibsClient
 
   private static String formatQuery(Map params)
   {
-    StringBuilder msg = new StringBuilder();
+    StringBuilder sb = new StringBuilder();
     Iterator es = params.entrySet().iterator();
     while (es.hasNext())
     {
@@ -616,12 +616,15 @@ public class DibsClient
       if (k == null || v == null)
         continue;
 
-      if (msg.length() > 0)
-        msg.append("&");
+      if (sb.length() > 0)
+        sb.append("&");
 
-      msg.append(k.toString()).append("=").append(urlEncodeUTF8(v.toString()));
+      sb.append(k.toString()).append("=").append(urlEncodeUTF8(v.toString()));
     }
-    return msg.toString();
+    String msg = sb.toString();
+    LOG.info("Formatted query {}", msg);
+
+    return msg;
   }
 
   private static class CheckAccountResponse implements DibsResponse<Boolean> {
