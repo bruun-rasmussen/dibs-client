@@ -111,19 +111,22 @@ public class DibsClient
   }
 
   // Experimental. To work on solving card validation issues
-  public DibsResponse validateSubscription(String ticket, Map additionalParams, String alternativePath)
+  public DibsResponse validateSubscription(String ticket, String orderid, Map additionalParams)
         throws DibsException
   {
       Map params = new HashMap();
       params.put("merchant", getMerchantId());
       params.put("ticket", ticket);
+      params.put("orderid", orderid);
+      params.put("amount", "100");
+      params.put("currency", "DKK");
+
       params.put("zero_preauth", "1");
 
       params.putAll(additionalParams);
 
-      String path = alternativePath == null ? "/cgi-ssl/ticket_auth.cgi" : alternativePath;
-      Map response = post(path, params, false);
-      LOG.info("Response from card validation using zero_preauth against {} for ticket {}: {}", path, ticket, response);
+      Map response = post("/cgi-ssl/ticket_auth.cgi", params, false);
+      LOG.info("Response from card validation using zero_preauth for ticket {}: {}", ticket, response);
 
       String status = (String)response.get("status");
       if("ACCEPTED".equalsIgnoreCase(status))
